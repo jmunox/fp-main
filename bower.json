@@ -1,0 +1,23 @@
+{
+  "name": "fp-main",
+  "description": "core for a ready to use dev environment",
+  "main": "./bin/www",
+  "authors": [
+    "jmunox <jmunoza@live.com>"
+  ],
+  "license": "GNU AGPL V3",
+  "moduleType": [],
+  "homepage": "https://github.com/jmunox/fp-main",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/lib/",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap-sass": "bootstrap-sass-official#~3.3.5",
+    "react": "~0.14.2"
+  }
+}
