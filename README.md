@@ -1,8 +1,25 @@
 # fp-main
+This is a ready to use bundle for development purposes.
+
+## Prerequisites
+
+Git and nodejs should be installed.
+
+For Windows users, please install first Git for Windows: https://windows.github.com/
+
+Then download NodeJS should be installed and follow instructions on the website.
+https://nodejs.org/en/download/
+
 
 ## Preparation: Install components
 
-First install requirejs.
+Install Express. More info at http://expressjs.com 
+```
+npm install express --save
+```
+
+
+Install requirejs.
 More info at http://requirejs.org/docs/node.html
 ```
 npm install --save requirejs
