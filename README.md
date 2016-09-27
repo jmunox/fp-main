@@ -41,13 +41,13 @@ Install gulp for dev
 npm install --save-dev gulp
 ```
 
-Install browserify, rectify and vinyl-source-stream.
+Install react-tools, browserify, rectify and vinyl-source-stream.
 
 // http://browserify.org/
 // https://github.com/andreypopp/reactify
 // https://github.com/hughsk/vinyl-source-stream
 ```
-npm install --save-dev browserify reactify vinyl-source-stream
+npm install --save-dev react-tools, browserify reactify vinyl-source-stream
 ```
 
 Install bower. 
