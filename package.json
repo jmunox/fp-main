@@ -16,7 +16,10 @@
     "winston": "~2.0.0",
     "requirejs": "~2.1.20",
     "bower": "~1.6.5",
-    "async": "~2.0.1"
+    "async": "~2.0.1",
+    "mongoose": "~4.6.3",
+    "mongodb": "~2.2.10",
+    "exif2": "0.0.1"
   },
   "devDependencies": {
     "requirejs": "~2.1.20",
