@@ -6,12 +6,11 @@ var fs = require("fs");
 
 var logger = require('../utils/logFactory').getLogger();
 var imageService = {};
-var storedImages = [];
 
 var pathMendel = "/Users/jmunoza/wee/workspace/curationarena/public/images/photos_A";
 var pathJesus= "/Users/jmunoza/odrive/Dropbox/Curation\ " +
   "Prototype/curationarena/public/images/photos_A";
-var pathTest = pathMendel;
+var pathTest = pathJesus;
 
 
 /**
@@ -50,11 +49,11 @@ var pathTest = pathMendel;
  */
 var imageSchema = function imageSchema(userId, fileWithPath, fileName, directory, url, callback) {
   var image = this;
-  image.userId = userId;
+  image.user = userId;
   image.path = fileWithPath;
   image.name = fileName;
   image.directory = directory;
-  image.url = url || "/files/images/" + encodeURIComponent(fileWithPath);
+  image.url = url || "/files/" + userId + "/images/" + encodeURIComponent(fileWithPath);
   image.orientation;
   image.rotation;
   image.width;
@@ -83,7 +82,7 @@ var imageSchema = function imageSchema(userId, fileWithPath, fileName, directory
 imageService.processImageFromDir = function processImageFromDir(userId, path, cb) {
   var images = [];
   var fs = require("fs");
-  logger.verbose('Path is: '+ path);
+  logger.verbose('[imageService.processImageFromDir] Loading images, path: ' + path);
   fs.readdir(path, function(err, files) {
     var filePath = path;
     if(filePath.indexOf('/', filePath.length - 1) == -1) filePath += '/';
@@ -91,8 +90,7 @@ imageService.processImageFromDir = function processImageFromDir(userId, path, cb
     files.some(function(name){
       name.substr(-4).match(/(png|jpeg|jpg|gif|JPG|JPEG|PNG|GIF)/) && images.push(new imageSchema(userId, filePath+name, name, filePath));
     });
-    if(err)
-      return cb(err);
+    if(err) return cb(err);
     else return cb(null,images);
   });
 };
@@ -109,7 +107,7 @@ imageService.loadExifData = function loadExifData (images, cb){
      * https://github.com/tj/node-exif
      */
     var exiftool = require('exif2');
-    exiftool(image.path, function(err, exifData){
+    exiftool(image.path, function(err, exifMetadata){
       if (!err) {
         //logger.verbose('exif data loaded successfully: ' + image.path);
         /**
@@ -124,8 +122,8 @@ imageService.loadExifData = function loadExifData (images, cb){
          * 8 = Rotate 270 CW
          *
          */
-        image.orientation = exifData['orientation'];
-        var rotation = exifData['rotation'] || exifData['orientation'] || '1';
+        image.orientation = exifMetadata['orientation'];
+        var rotation = exifMetadata['rotation'] || exifMetadata['orientation'] || '1';
         switch(rotation){
           case '1':
           case 'Horizontal (normal)':
@@ -165,17 +163,23 @@ imageService.loadExifData = function loadExifData (images, cb){
             image.rotation = { index: '1', description: 'Horizontal (normal)'};
             break;
         }
-        image.width = exifData['image width'];
-        image.height = exifData['image height'];
-        image.original_time = exifData['date time original'];
-        image.creation_time = exifData['create date'];
-        image.modified_time = exifData['modify date'];
-        image.access_time = exifData['file access date time'];
-        image.file_type = exifData['file type extension'];
-        image.mime_type = exifData['mime type'];
-        image.bytes = exifData['file size'];
-        image.size = exifData['file size'];
-        //logger.verbose(exifData);
+        image.width = exifMetadata['image width'];
+        image.height = exifMetadata['image height'];
+        /**
+         * convert exifDate to normal date
+         * https://github.com/briangershon/exif-date-to-iso
+         */
+        var moment = require('moment-timezone');
+        var timeZone = moment.tz.guess();
+        const exifDate = require('exif-date-to-iso');
+        image.original_time = exifDate.toISO(exifMetadata['date time original'], timeZone);
+        image.creation_time = exifDate.toISO(exifMetadata['create date'], timeZone);
+        image.modified_time = exifDate.toISO(exifMetadata['modify date'], timeZone);
+        image.access_time = exifDate.toISO(exifMetadata['file access date time'], timeZone);
+        image.file_type = exifMetadata['file type extension'];
+        image.mime_type = exifMetadata['mime type'];
+        image.bytes = exifMetadata['file size'];
+        image.size = exifMetadata['file size'];
         cb1(null, true);
       }
       else {
@@ -189,15 +193,40 @@ imageService.loadExifData = function loadExifData (images, cb){
   });
 };
 
-
-imageService.getImages = function getImages(path,cb) {
+imageService.getImagesForUser = function getImagesForUser(user,cb) {
   var context = this;
-  pathTest = path || pathTest;
-  context.processImageFromDir("UserA",pathTest, function(err, images){
+  /*
+   * TODO get path for user from DB
+   */
+  context.processImageFromDir(user,pathTest, function(err, images){
     if(!err) {
       context.loadExifData(images, function(err, images){
-        storedImages = storedImages.concat(images);
-        cb(null, storedImages);
+        //storedImages = storedImages.concat(images);
+        images = images.sort(function(a,b){
+          if(a.original_time < b.original_time) return -1;
+          else return 1;
+        });
+        cb(null, images);
+      });
+
+    } else cb(err)
+  });
+};
+
+imageService.loadImagesForUser = function loadImagesForUser(user, path, cb) {
+  var context = this;
+  context.processImageFromDir(user,path, function(err, images){
+    if(!err) {
+      context.loadExifData(images, function(err, images){
+        //storedImages = storedImages.concat(images);
+        images = images.sort(function(a,b){
+          if(a.original_time < b.original_time) return -1;
+          else return 1;
+        });
+        /*
+         * TODO save everything in DB
+         */
+        cb(null, images);
       });
 
     } else cb(err)
@@ -205,7 +234,7 @@ imageService.getImages = function getImages(path,cb) {
 };
 
 /**TODO fix image lookup through USER_ID, URL and Path */
-imageService.getImage = function getImage(url, cb) {
+imageService.getImage = function getImage(user, url, cb) {
   var pathToFile = url;
   cb(null, pathToFile);
 };

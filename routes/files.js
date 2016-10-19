@@ -34,11 +34,23 @@ router.get('/filesystem/:path', urlencodedParser, function(req, res, next) {
   });
 });
 
+router.post('/:user/images/:path', function(req, res, next) {
+  var imageService = require('../services/imageService');
+  var user = req.params.user;
+  var path = req.params.path;
+  imageService.getImagesForUser(user, function(err, images) {
+    if(err) res.status(err.status || 400).send(err);
+    else {
+      return res.status(200).send({ photos: images });
+    }
+  });
+});
+
 /* GET list of images. */
-router.get('/filesystem/:path/images', function(req, res, next) {
+router.get('/:user/images', function(req, res, next) {
   var imageService = require('../services/imageService');
-  var path = req.params.path || '/';
-  imageService.getImages(path, function(err, images){
+  var user = req.params.user;
+  imageService.getImagesForUser(user, function(err, images) {
     if(err) res.status(err.status || 400).send(err);
     else {
       return res.status(200).send({ photos: images });
@@ -46,32 +58,11 @@ router.get('/filesystem/:path/images', function(req, res, next) {
   });
 });
 
-router.get('/images', function(req, res, next) {
+router.get('/:user/images/:file', urlencodedParser, function(req, res, next) {
   var imageService = require('../services/imageService');
-  var path = "/Users/jmunoza/odrive/Dropbox/Curation\ " +
-    "Prototype/curationarena/public/images/photos_B";
-
-  imageService.getImages(path, function(err, images){
-    if(err) res.status(err.status || 400).send(err);
-    else {
-      //var _ = require('underscore');
-      //_.sortBy(images)
-      images.sort(function(a,b){
-        var dateA = (new Date(a.original_time));
-        var dateB = (new Date(b.original_time));
-        logger.verbose(i++);
-        return (dateA - dateB);
-      });
-      return res.status(200).send({ photos: images });
-    }
-  });
-});
-
-router.get('/images/:file', urlencodedParser, function(req, res, next) {
-  var imageService = require('../services/imageService');
-  var fileName;
-  fileName = req.params.file;
-  imageService.getImage(fileName, function (err, pathToFile){
+  var file = req.params.file;
+  var user = req.params.user;
+  imageService.getImage(user, file, function (err, pathToFile){
     res.sendFile(pathToFile);
   });
 });
