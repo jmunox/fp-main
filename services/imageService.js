@@ -7,11 +7,23 @@ var fs = require("fs");
 var logger = require('../utils/logFactory').getLogger();
 var imageService = {};
 
-var pathMendel = "/Users/jmunoza/wee/workspace/curationarena/public/images/photos_A";
-var pathJesus= "/Users/jmunoza/odrive/Dropbox/Curation\ " +
+var pathUserA = "/Users/jmunoza/wee/workspace/curationarena/public/images/photos_A";
+var pathUserB= "/Users/jmunoza/odrive/Dropbox/Curation\ " +
   "Prototype/curationarena/public/images/photos_A";
-var pathTest = pathJesus;
-
+var userB = '/Volumes/FUSE/summer2016';
+var pathTest = userB;
+var userFiles = [
+  {
+  userId : 'user_A',
+  path: pathUserA,
+  json: []
+  },
+  {
+    userId : 'user_B',
+    path: pathUserB,
+    json: []
+  }
+];
 
 /**
  *
@@ -193,23 +205,29 @@ imageService.loadExifData = function loadExifData (images, cb){
   });
 };
 
-imageService.getImagesForUser = function getImagesForUser(user,cb) {
-  var context = this;
+imageService.getImagesForUser = function getImagesForUser(userId,cb) {
   /*
    * TODO get path for user from DB
    */
-  context.processImageFromDir(user,pathTest, function(err, images){
-    if(!err) {
-      context.loadExifData(images, function(err, images){
-        //storedImages = storedImages.concat(images);
-        images = images.sort(function(a,b){
-          if(a.original_time < b.original_time) return -1;
-          else return 1;
-        });
-        cb(null, images);
-      });
+  logger.debug(userId);
+  userFiles.forEach(function (user){
+    if(user.userId == userId) return cb(null,user.json);
 
-    } else cb(err)
+  });
+
+};
+
+imageService.loadImagesOnStart = function loadImagesOnStart(cb){
+  var context = this;
+  userFiles.forEach(function (user){
+    context.loadImagesForUser(user.userId, user.path, function(err, images){
+      if(!err) {
+        logger.debug('Photos for user:' + user.userId + ' loaded successfully');
+        user.json = user.json.concat(images);
+        cb(null);
+      }
+      else cb(err);
+    });
   });
 };
 
@@ -237,6 +255,11 @@ imageService.loadImagesForUser = function loadImagesForUser(user, path, cb) {
 imageService.getImage = function getImage(user, url, cb) {
   var pathToFile = url;
   cb(null, pathToFile);
+};
+
+imageService.generateThumbnail = function generateThumbnail(images,cb){
+
+
 };
 
 
