@@ -86,4 +86,23 @@ app.use(function(err, req, res, cb) {
   });
 });
 
+/**
+ * load images at start
+ * @type {*}
+ */
+var imageService = require('./services/imageService');
+imageService.loadImagesOnStart(function(err){
+  if(err) logger.error(err);
+  else{
+    //for the other socket
+    logger.debug('Updating status connection with JSON');
+    //ioLoader.emit('chat message', false);
+    //ioLoader.on('connection', function(socket) {
+    //log when a user is connected
+    //broadcast the message to the other people
+    //ioLoader.emit('chat message', false);
+    //});
+  }
+});
+
 module.exports = app;
