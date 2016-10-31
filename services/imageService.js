@@ -157,7 +157,7 @@ imageService.loadExifDataBulkFolder = function loadExifDataBulkFolder (images, c
        * done in series because it calls exiftool via shell command and has to be
        * exif tool: http://www.sno.phy.queensu.ca/~phil/exiftool/
        */
-      var exiftool = require('../utils/exif2');
+      var exiftool = require('exif2');
       var exifParams = ['-FileName', '-ImageHeight', '-ImageWidth', '-Rotation',
         '-Orientation', '-DateTimeOriginal', '-CreateDate', '-ModifyDate',
       '-OffsetTime', '-FileAccessDate', '-FileType', '-MIMEType', '-fast'];
@@ -316,7 +316,7 @@ imageService.loadExifDataPerFile = function loadExifDataPerFile (images, cb){
       var exiftool = require('exif2');
       // done in series.
       var every = require('async').everyLimit;
-      every(images, 4, function(image, cb1) {
+      every(images, 2, function(image, cb1) {
         exiftool(image.path, null, function(err, exifMetadata){
           if (!err) {
             //logger.verbose('exif data loaded successfully: ' + image.path);
